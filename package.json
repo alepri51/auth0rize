@@ -1,0 +1,23 @@
+{
+  "name": "auth0rize",
+  "version": "1.0.0",
+  "description": "auth0rize.me SDK",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git"
+  },
+  "keywords": [
+    "auth0rize"
+  ],
+  "author": "auth0rize",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^0.19.2",
+    "express": "^4.17.1",
+    "jsonwebtoken": "^8.5.1"
+  }
+}

@@ -17,7 +17,10 @@ class Auth0rize {
         return async (req, res, next) => {
             let { data: { content } } = await this.axios({
                 url: '/service/bots',
-                method: 'GET'
+                method: 'POST',
+                data: {
+                    owner: this.key
+                }
             });
         
             res.json(content);

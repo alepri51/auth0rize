@@ -3,7 +3,7 @@ const jsonwebtoken = require('jsonwebtoken');
 
 const express = require('express');
 
-class Auth0rize {
+/* class Auth0rize {
     constructor({ url, key, secret }) {
         this.axios = axios.create({
             baseURL: url
@@ -109,9 +109,116 @@ const auth0rize = ({ url, key, secret, onAuth, end_points = { bots: '/bots', lin
     router.post(end_points.auth || '/auth', instance.auth(onAuth));
 
     return router;
+} */
+
+let _class = void 0;
+
+if(typeof(window) === 'undefined') {
+    //server side
+
+    const axios = require('axios');
+    class Auth0rize {
+        constructor({ api_key, http_client = axios, processSignIn }) {
+            this.tokens = {};
+
+            this.api_key = api_key;
+            this.processSignIn = processSignIn;
+
+            const SSEChannel = require('sse-pubsub');
+            this.channel = new SSEChannel();
+        }
+
+        middlewares(app) {
+            app.get('/sse', this.sse);
+            app.post('/apply', this.apply);
+            app.get('/sources', this.sources);
+            app.post('/create', this.create);
+            app.post('/signIn', this.signIn);
+        }
+
+        sse(req, res) {
+            return this.channel.subscribe(req, res);
+        }
+
+        apply(req, res) {
+            //call from authorize.core.api
+            let { token } = req.body;
+
+            this.channel.publish(req.body, token);
+        }
+
+        sources(req, res) {
+            //call authorize.core.api
+        }
+
+        create(req, res) {
+            //call authorize.core.api
+        }
+
+        signIn(req, res) {
+            //call authorize.core.api
+            this.processSignIn && this.processSignIn();
+        }
+    }
+
+    _class = Auth0rize;
+}
+else {
+    //client side
+    class Auth0rize {
+        constructor({ base_url, onCreate, onSignIn }) {
+            this.base_url = base_url;
+            this.onCreate = onCreate;
+            this.onSignIn = onSignIn;
+        }
+
+        async sources() {
+            let response = await fetch({
+                url: `${base_url}/auth0rize/sources`
+            });
+
+            return response.map(source => {
+                let { _id, name } = source;
+
+                return {
+                    name,
+                    request: async (link_type = 'web') => {
+                        let response = await fetch({
+                            method: 'POST',
+                            url: `${base_url}/auth0rize/create`,
+                            data: { _id, name, link_type }
+                        });
+                        
+                        let { token } = response;
+
+                        this.onCreate && this.onCreate(response); // return qr & link & token
+                        this.eventSource = void 0;
+
+                        if(window.EventSource) {
+                            this.eventSource = new EventSource(`${base_url}/auth0rize/sse`);
+                            
+                            eventSource.addEventListener(token, async e => {
+                                let response = await fetch({
+                                    method: 'POST',
+                                    url: `${base_url}/auth0rize/signin`,
+                                    data: { token }
+                                });
+
+                                this.onSignIn && this.onSignIn(response);
+                            });
+                        }
+                        
+                    }
+                }
+            });
+        }
+    }
+
+    _class = Auth0rize;
 }
 
+module.exports = _class;
 
-module.exports = {
+/* module.exports = {
     auth0rize
-}
+} */

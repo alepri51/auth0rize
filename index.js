@@ -6,6 +6,10 @@ if(typeof(window) === 'undefined') {
     const axios = require('axios');
     const jsonwebtoken = require('jsonwebtoken');
 
+    const { sse }= require('moleculer.utils');
+
+    const { subscribe, publish } = sse();
+
     class Auth0rize {
         constructor({ url, api_key, secret, onMessage, onSignIn }) {
             this.api_key = api_key;
@@ -16,8 +20,8 @@ if(typeof(window) === 'undefined') {
 
             this.auth0rize = axios.create({ baseURL: url });
 
-            const SSEChannel = require('sse-pubsub');
-            this.channel = new SSEChannel();
+            /* const SSEChannel = require('sse-pubsub');
+            this.channel = new SSEChannel(); */
 
             //setInterval(() => this.channel.publish(`test data ${Date.now()}`, 'interval'), 1000);
         }
@@ -47,7 +51,7 @@ if(typeof(window) === 'undefined') {
         }
 
         sse(req, res) {
-            return this.channel.subscribe(req, res);
+            return subscribe(req, res);
         }
 
         async sources(req, res) {
@@ -87,7 +91,7 @@ if(typeof(window) === 'undefined') {
 
             res.end(response);
 
-            this.channel.publish(jwt, token);
+            publish(jwt, token);
 
             return response;
         }

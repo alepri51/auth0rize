@@ -6,7 +6,7 @@ if(typeof(window) === 'undefined') {
     const axios = require('axios');
     const jsonwebtoken = require('jsonwebtoken');
 
-    const { sse }= require('moleculer.utils');
+    const sse = require('moleculer.utils/sse');
 
     const { subscribe, publish } = sse();
 

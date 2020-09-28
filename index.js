@@ -85,15 +85,15 @@ if(typeof(window) === 'undefined') {
         message(req, res) {
             let { contact, meta, token, source } = req.body;
 
-            let jwt = jsonwebtoken.sign({ contact, meta, token, source }, this.secret);
+            let { reply, data = { contact, meta, token, source } } = this.onMessage ? this.onMessage({ contact, meta, token, source }) : { reply: 'Welcome!' };
 
-            let response = this.onMessage ? this.onMessage({ contact, meta, token, source }) : 'Hello, man!';
+            let jwt = jsonwebtoken.sign(data, this.secret);
 
-            res && res.end(response);
+            res && res.end(reply);
 
-            publish(jwt, token);
+            this.channel.publish(jwt, token);
 
-            return response;
+            return { reply, data };
         }
 
         signin(req, res, next) {

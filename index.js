@@ -121,9 +121,7 @@ else {
             this.onCreate = onCreate;
             this.onSignIn = onSignIn;
 
-            if(window.EventSource) {
-                this.eventSource = new EventSource(`${this.url}/auth0rize.events`);
-            }
+           
         }
 
         async sources({ meta = {} } = {}) {
@@ -157,23 +155,30 @@ else {
 
                         this.onCreate && this.onCreate(response); // return qr & link & token
 
-                        this.eventSource && this.eventSource.addEventListener(token, async e => {
-                            let jwt = e.data;
-                            debugger
-                            let response = await fetch(`${this.url}/auth0rize.signin`, {
-                                method: 'POST',
-                                body: JSON.stringify({ jwt }),
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                }
-                            });
-    
-                            response = response ? await response.json() : {};
-                            debugger
-                            let event = new CustomEvent(token, { detail: response });
+                        if(window.EventSource) {
+                            this.eventSource = new EventSource(`${this.url}/auth0rize.events`);
 
-                            this.dispatchEvent(event);
-                        });
+                            this.eventSource && this.eventSource.addEventListener(token, async e => {
+                                let jwt = e.data;
+                                debugger
+                                let response = await fetch(`${this.url}/auth0rize.signin`, {
+                                    method: 'POST',
+                                    body: JSON.stringify({ jwt }),
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    }
+                                });
+        
+                                response = response ? await response.json() : {};
+                                debugger
+                                let event = new CustomEvent(token, { detail: response });
+    
+                                this.dispatchEvent(event);
+
+                                this.eventSource.close();
+                                this.eventSource = void 0;
+                            });
+                        }
                         
                         return response;
                     }

@@ -1,6 +1,6 @@
 {
   "name": "auth0rize",
-  "version": "2.0.7",
+  "version": "2.0.8",
   "description": "auth0rize.me SDK",
   "main": "index.js",
   "scripts": {

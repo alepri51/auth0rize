@@ -82,10 +82,10 @@ if(typeof(window) === 'undefined') {
             return bots;
         }
 
-        message(req, res) {
+        async message(req, res) {
             let { contact, meta, token, source } = req.body;
 
-            let { reply, data = { contact, meta, token, source } } = this.onMessage ? this.onMessage({ contact, meta, token, source }) : { reply: 'Welcome!' };
+            let { reply, data = { contact, meta, token, source } } = this.onMessage ? await this.onMessage({ contact, meta, token, source }) : { reply: 'Welcome!' };
 
             let jwt = jsonwebtoken.sign(data, this.secret);
 

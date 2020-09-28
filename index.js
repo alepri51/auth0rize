@@ -125,6 +125,10 @@ else {
         }
 
         async sources({ meta = {} } = {}) {
+            if(window.EventSource && !this.eventSource) {
+                this.eventSource = new EventSource(`${this.url}/auth0rize.events`);
+            }
+            
             let url = `${this.url}/auth0rize.sources`;
 
             let response = await fetch(url);
@@ -155,9 +159,8 @@ else {
 
                         this.onCreate && this.onCreate(response); // return qr & link & token
 
-                        if(window.EventSource) {
-                            this.eventSource = new EventSource(`${this.url}/auth0rize.events`);
-
+                        
+                        {
                             this.eventSource && this.eventSource.addEventListener(token, async e => {
                                 let jwt = e.data;
                                 debugger

@@ -91,7 +91,7 @@ if(typeof(window) === 'undefined') {
 
             res && res.end(reply);
 
-            this.channel.publish(jwt, token);
+            publish(jwt, token);
 
             return { reply, data };
         }

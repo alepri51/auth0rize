@@ -89,7 +89,7 @@ if(typeof(window) === 'undefined') {
 
             let response = this.onMessage ? this.onMessage({ contact, meta, token, source }) : 'Hello, man!';
 
-            res.end(response);
+            res && res.end(response);
 
             publish(jwt, token);
 

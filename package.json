@@ -18,6 +18,7 @@
   "dependencies": {
     "axios": "^0.19.2",
     "jsonwebtoken": "^8.5.1",
-    "moleculer.utils": "git+https://github.com/alepri51/moleculer.utils.git"
+    "moleculer.utils": "git+https://github.com/alepri51/moleculer.utils.git",
+    "ua-parser-js": "^0.7.22"
   }
 }

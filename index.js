@@ -5,6 +5,7 @@ if(typeof(window) === 'undefined') {
 
     const axios = require('axios');
     const jsonwebtoken = require('jsonwebtoken');
+    const UA = require('ua-parser-js').UAParser;
 
     const sse = require('moleculer.utils/sse');
 
@@ -55,7 +56,11 @@ if(typeof(window) === 'undefined') {
         }
 
         async sources(req, res) {
-            let jwt = jsonwebtoken.sign({ api_key: this.api_key }, this.secret);
+            const { device } = (new UA(req.headers['user-agent'])).getResult();
+
+            const mobile = device.type === 'mobile' ? true : false;
+
+            let jwt = jsonwebtoken.sign({ api_key: this.api_key, mobile }, this.secret);
                 
             let { data } = await this.auth0rize.post('/client.sources', { jwt });
 

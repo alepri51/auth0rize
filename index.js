@@ -36,11 +36,11 @@ if(typeof(window) === 'undefined') {
                     req.method === 'POST' && req.url.endsWith('/auth0rize.message') ? this.message(req, res) : next();
                 },
                 (req, res, next) => {
-                    req.method === 'GET' && req.url.endsWith('/auth0rize.sources') ? this.sources(req, res) : next();
+                    req.method === 'POST' && req.url.endsWith('/auth0rize.sources') ? this.sources(req, res) : next();
                 },
-                (req, res, next) => {
+                /* (req, res, next) => {
                     req.method === 'POST' && req.url.endsWith('/auth0rize.request') ? this.request(req, res) : next();
-                },
+                }, */
                 (req, res, next) => {
                     req.method === 'POST' && req.url.endsWith('/auth0rize.signin') ? this.signin(req, res, next) : next();
                 }
@@ -56,11 +56,13 @@ if(typeof(window) === 'undefined') {
         }
 
         async sources(req, res) {
+            let { meta } = req.body;
+
             const { device } = (new UA(req.headers['user-agent'])).getResult();
 
             const mobile = device.type === 'mobile' ? true : false;
 
-            let jwt = jsonwebtoken.sign({ api_key: this.api_key, mobile }, this.secret);
+            let jwt = jsonwebtoken.sign({ api_key: this.api_key, mobile, meta }, this.secret);
                 
             let { data } = await this.auth0rize.post('/client.sources', { jwt });
 
@@ -69,7 +71,7 @@ if(typeof(window) === 'undefined') {
             return data;
         }
 
-        async request(req, res) {
+        /* async request(req, res) {
             let { bots, link_type, meta } = req.body;
 
             bots = bots.map(bot => {
@@ -85,7 +87,7 @@ if(typeof(window) === 'undefined') {
             res.json(bots);
             
             return bots;
-        }
+        } */
 
         async message(req, res) {
             let { contact, meta, token, source } = req.body;
@@ -136,62 +138,41 @@ else {
             
             let url = `${this.url}/auth0rize.sources`;
 
-            let response = await fetch(url);
-            response = response ? await response.json() : [];
-
-            return response.map(source => {
-                let { _id, active, name, _class } = source;
-
-                return {
-                    _id,
-                    active,
-                    name,
-                    _class,
-                    request: async (link_type = 'web') => {
-                        let bots = [_id];
-
-                        let response = await fetch(`${this.url}/auth0rize.request`, {
-                            method: 'POST',
-                            body: JSON.stringify({ bots, link_type, meta }),
-                            headers: {
-                                'Content-Type': 'application/json'
-                            }
-                        });
-
-                        response = response ? await response.json() : {};
-                        
-                        let [{ token }] = response;
-
-                        this.onCreate && this.onCreate(response); // return qr & link & token
-
-                        
-                        {
-                            this.eventSource && this.eventSource.addEventListener(token, async e => {
-                                let jwt = e.data;
-                                debugger
-                                let response = await fetch(`${this.url}/auth0rize.signin`, {
-                                    method: 'POST',
-                                    body: JSON.stringify({ jwt }),
-                                    headers: {
-                                        'Content-Type': 'application/json'
-                                    }
-                                });
-        
-                                response = response ? await response.json() : {};
-                                debugger
-                                let event = new CustomEvent(token, { detail: response });
-    
-                                this.dispatchEvent(event);
-
-                                this.eventSource.close();
-                                this.eventSource = void 0;
-                            });
-                        }
-                        
-                        return response;
-                    }
+            let response = await fetch(url, {
+                method: 'POST',
+                body: JSON.stringify({ meta }),
+                headers: {
+                    'Content-Type': 'application/json'
                 }
             });
+
+            response =  response ? await response.json() : [];
+            debugger
+
+            let { token, sources } = response;
+
+            this.eventSource && this.eventSource.addEventListener(token, async e => {
+                let jwt = e.data;
+                debugger
+                let response = await fetch(`${this.url}/auth0rize.signin`, {
+                    method: 'POST',
+                    body: JSON.stringify({ jwt }),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                response = response ? await response.json() : {};
+                debugger
+                let event = new CustomEvent('signin', { detail: response });
+
+                this.dispatchEvent(event);
+
+                this.eventSource.close();
+                this.eventSource = void 0;
+            });
+
+            return sources;
         }
     }
 

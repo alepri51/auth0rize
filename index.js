@@ -128,7 +128,28 @@ else {
             this.onCreate = onCreate;
             this.onSignIn = onSignIn;
 
-           
+            this.token = void 0;
+
+            this.listener = async e => {
+                let jwt = e.data;
+                debugger
+                let response = await fetch(`${this.url}/auth0rize.signin`, {
+                    method: 'POST',
+                    body: JSON.stringify({ jwt }),
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                response = response ? await response.json() : {};
+                debugger
+                let event = new CustomEvent('signin', { detail: response });
+
+                this.dispatchEvent(event);
+
+                this.eventSource.close();
+                this.eventSource = void 0;
+            }
         }
 
         async sources({ meta = {} } = {}) {
@@ -150,27 +171,12 @@ else {
             debugger
 
             let { token, sources } = response;
+            
+            this.token && this.eventSource && this.eventSource.removeEventListener(this.token, this.listener);
 
-            this.eventSource && this.eventSource.addEventListener(token, async e => {
-                let jwt = e.data;
-                debugger
-                let response = await fetch(`${this.url}/auth0rize.signin`, {
-                    method: 'POST',
-                    body: JSON.stringify({ jwt }),
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
+            this.token = token;
 
-                response = response ? await response.json() : {};
-                debugger
-                let event = new CustomEvent('signin', { detail: response });
-
-                this.dispatchEvent(event);
-
-                this.eventSource.close();
-                this.eventSource = void 0;
-            });
+            this.eventSource && this.eventSource.addEventListener(this.token, this.listener);
 
             return sources;
         }

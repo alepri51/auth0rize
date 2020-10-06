@@ -94,6 +94,8 @@ if(typeof(window) === 'undefined') {
 
             if(contact.system) {
                 this.onSystemMessage && this.onSystemMessage(req.body);
+
+                return {};
             }
 
             let { reply, data = { contact, meta, token, source } } = this.onMessage ? await this.onMessage({ contact, meta, token, source }) : { reply: 'Welcome!' };

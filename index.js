@@ -172,7 +172,11 @@ else {
 
             let { token, sources } = response;
             
-            this.token && this.eventSource && this.eventSource.removeEventListener(this.token, this.listener);
+            const removeEventListener = (token) => {
+                setTimeout(() => this.eventSource.removeEventListener(token, this.listener), 60000);
+            }
+            
+            this.token && this.eventSource && removeEventListener(this.token);
 
             this.token = token;
 

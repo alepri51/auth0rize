@@ -92,6 +92,10 @@ if(typeof(window) === 'undefined') {
         async message(req, res) {
             let { contact, meta, token, source } = req.body;
 
+            if(contact.system) {
+                this.onSystemMessage && this.onSystemMessage(req.body);
+            }
+
             let { reply, data = { contact, meta, token, source } } = this.onMessage ? await this.onMessage({ contact, meta, token, source }) : { reply: 'Welcome!' };
 
             let jwt = jsonwebtoken.sign(data, this.secret);

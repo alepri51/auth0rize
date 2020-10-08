@@ -7,30 +7,26 @@ if(typeof(window) === 'undefined') {
     const jsonwebtoken = require('jsonwebtoken');
     const UA = require('ua-parser-js').UAParser;
 
-    const sse = require('moleculer.utils/sse');
-
-    const { subscribe, publish } = sse();
+    const SSE = require('../../../../../sse');
 
     class Auth0rize {
-        constructor({ url, api_key, secret, onMessage, onSignIn }) {
+        constructor({ url, api_key, secret, onMessage, onSystemMessage, onSignIn, redis: { pub, sub } = {} }) {
             this.api_key = api_key;
             this.secret = secret;
 
             this.onSignIn = onSignIn;
             this.onMessage = onMessage;
+            this.onSystemMessage = onSystemMessage;
 
             this.auth0rize = axios.create({ baseURL: url });
 
-            /* const SSEChannel = require('sse-pubsub');
-            this.channel = new SSEChannel(); */
-
-            //setInterval(() => this.channel.publish(`test data ${Date.now()}`, 'interval'), 1000);
+            this.sse = SSE({ pub, sub });
         }
 
         get middlewares() {
             return [
                 (req, res, next) => {
-                    req.method === 'GET' && req.url.endsWith('/auth0rize.events') ? this.sse(req, res) : next();
+                    req.method === 'GET' && req.url.endsWith('/auth0rize.events') ? this.sseChannel(req, res) : next();
                 },
                 (req, res, next) => {
                     req.method === 'POST' && req.url.endsWith('/auth0rize.message') ? this.message(req, res) : next();
@@ -38,21 +34,14 @@ if(typeof(window) === 'undefined') {
                 (req, res, next) => {
                     req.method === 'POST' && req.url.endsWith('/auth0rize.sources') ? this.sources(req, res) : next();
                 },
-                /* (req, res, next) => {
-                    req.method === 'POST' && req.url.endsWith('/auth0rize.request') ? this.request(req, res) : next();
-                }, */
                 (req, res, next) => {
                     req.method === 'POST' && req.url.endsWith('/auth0rize.signin') ? this.signin(req, res, next) : next();
                 }
-                //app.get('/auth0rize.sse', this.sse);
-                //app.post('/auth0rize.signin', this.signin);
-                //app.get('/auth0rize.sources', this.sources);
-                //app.post('/auth0rize.request', this.request);
             ]
         }
 
-        sse(req, res) {
-            return subscribe(req, res);
+        sseChannel(req, res) {
+            return this.sse.subscribe(req, res, 'events');
         }
 
         async sources(req, res) {
@@ -71,24 +60,6 @@ if(typeof(window) === 'undefined') {
             return data;
         }
 
-        /* async request(req, res) {
-            let { bots, link_type, meta } = req.body;
-
-            bots = bots.map(bot => {
-                let jwt = jsonwebtoken.sign({ bot_id: bot, link_type, meta, api_key: this.api_key }, this.secret);
-            
-                return this.auth0rize.post('/client.request', { jwt });
-            });
-            
-            bots = await Promise.all(bots);
-
-            bots = bots.map(bot => bot.data.content);
-
-            res.json(bots);
-            
-            return bots;
-        } */
-
         async message(req, res) {
             let { contact, meta, token, source } = req.body;
 
@@ -104,7 +75,8 @@ if(typeof(window) === 'undefined') {
 
             res && res.end(reply);
 
-            publish(jwt, token);
+            let publish = this.sse.clients['events'];
+            publish && publish(token, jwt);
 
             return { reply, data };
         }
@@ -153,8 +125,8 @@ else {
 
                 this.dispatchEvent(event);
 
-                this.eventSource.close();
-                this.eventSource = void 0;
+                //this.eventSource.close();
+                //this.eventSource = void 0;
             }
         }
 
@@ -174,14 +146,13 @@ else {
             });
 
             response =  response ? await response.json() : [];
-            debugger
 
             let { token, sources } = response;
             
             const removeEventListener = (token) => {
-                setTimeout(() => this.eventSource.removeEventListener(token, this.listener), 60000);
+                setTimeout(() => this.eventSource.removeEventListener(token, this.listener), 100000);
             }
-            
+
             this.token && this.eventSource && removeEventListener(this.token);
 
             this.token = token;

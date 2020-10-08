@@ -26,7 +26,7 @@ if(typeof(window) === 'undefined') {
         get middlewares() {
             return [
                 (req, res, next) => {
-                    req.method === 'GET' && req.url.endsWith('/auth0rize.events') ? this.sseChannel(req, res) : next();
+                    req.method === 'GET' && req.url.includes('/auth0rize.events?channel=') ? this.sseChannel(req, res) : next();
                 },
                 (req, res, next) => {
                     req.method === 'POST' && req.url.endsWith('/auth0rize.message') ? this.message(req, res) : next();
@@ -41,7 +41,7 @@ if(typeof(window) === 'undefined') {
         }
 
         sseChannel(req, res) {
-            return this.sse.subscribe(req, res, 'events');
+            return this.sse.subscribe(req, res, req.query.channel);
         }
 
         async sources(req, res) {
@@ -75,7 +75,7 @@ if(typeof(window) === 'undefined') {
 
             res && res.end(reply);
 
-            let publish = this.sse.clients['events'];
+            let publish = this.sse.clients[token];
             publish && publish(token, jwt);
 
             return { reply, data };
@@ -107,10 +107,11 @@ else {
             this.onSignIn = onSignIn;
 
             this.token = void 0;
+            this.channel = Date.now();
 
             this.listener = async e => {
                 let jwt = e.data;
-                debugger
+
                 let response = await fetch(`${this.url}/auth0rize.signin`, {
                     method: 'POST',
                     body: JSON.stringify({ jwt }),
@@ -124,17 +125,10 @@ else {
                 let event = new CustomEvent('signin', { detail: response });
 
                 this.dispatchEvent(event);
-
-                //this.eventSource.close();
-                //this.eventSource = void 0;
             }
         }
 
         async sources({ meta = {} } = {}) {
-            if(window.EventSource && !this.eventSource) {
-                this.eventSource = new EventSource(`${this.url}/auth0rize.events`);
-            }
-            
             let url = `${this.url}/auth0rize.sources`;
 
             let response = await fetch(url, {
@@ -148,16 +142,20 @@ else {
             response =  response ? await response.json() : [];
 
             let { token, sources } = response;
-            
-            const removeEventListener = (token) => {
-                setTimeout(() => this.eventSource.removeEventListener(token, this.listener), 100000);
+
+            if(window.EventSource) {
+                let eventSource = new EventSource(`${this.url}/auth0rize.events?channel=${token}`);
+
+                eventSource.addEventListener(token, this.listener);
+
+                setTimeout(() => {
+                    eventSource.removeEventListener(token, this.listener);
+
+                    eventSource.close();
+
+                    eventSource = void 0;
+                }, 60000);
             }
-
-            this.token && this.eventSource && removeEventListener(this.token);
-
-            this.token = token;
-
-            this.eventSource && this.eventSource.addEventListener(this.token, this.listener);
 
             return sources;
         }

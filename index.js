@@ -7,7 +7,7 @@ if(typeof(window) === 'undefined') {
     const jsonwebtoken = require('jsonwebtoken');
     const UA = require('ua-parser-js').UAParser;
 
-    const SSE = require('../../../../../sse');
+    const SSE = require('sse');
 
     class Auth0rize {
         constructor({ url, api_key, secret, onMessage, onSystemMessage, onSignIn, redis: { pub, sub } = {} }) {

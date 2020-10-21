@@ -21,6 +21,64 @@ if(typeof(window) === 'undefined') {
             this.auth0rize = axios.create({ baseURL: url });
 
             this.sse = SSE({ pub, sub });
+
+            this.sseChannel = (req, res) => {
+                return this.sse.subscribe(req, res, req.query.channel);
+            }
+
+            this.sources = async (req, res) => {
+                req = req || { body: {}, headers: { 'user-agent': 'Mozila' } };
+    
+                let { meta } = req.body;
+    
+                const { device } = (new UA(req.headers['user-agent'])).getResult();
+    
+                const mobile = device.type === 'mobile' ? true : false;
+    
+                let jwt = jsonwebtoken.sign({ api_key: this.api_key, mobile, meta }, this.secret);
+                    
+                let { data } = await this.auth0rize.post('/client.sources', { jwt });
+    
+                res.json(data.content);
+    
+                return data;
+            }
+
+            this.message = async (req, res) => {
+                let { contact, meta, token, source } = req.body;
+    
+                if(contact.system) {
+                    this.onSystemMessage && this.onSystemMessage(req.body);
+    
+                    return {};
+                }
+    
+                let { reply, data = { contact, meta, token, source } } = this.onMessage ? await this.onMessage({ contact, meta, token, source }) : { reply: 'Welcome!' };
+    
+                let jwt = jsonwebtoken.sign(data, this.secret);
+    
+                res && res.end(reply);
+    
+                let publish = this.sse.clients[token];
+                publish && publish(token, jwt);
+    
+                return { reply, data };
+            }
+
+            this.signin = (req, res, next) => {
+                let { jwt } = req.body;
+    
+                try {
+                    let message = jsonwebtoken.verify(jwt, this.secret);
+    
+                    this.onSignIn ? this.onSignIn(req, res, message) : next();
+    
+                    res && res.end();
+                }
+                catch(err) {
+                    throw { code: 422, message: 'Client verification failed.' };
+                }
+            }
         }
 
         get middlewares() {
@@ -40,11 +98,13 @@ if(typeof(window) === 'undefined') {
             ]
         }
 
-        sseChannel(req, res) {
+        /* sseChannel(req, res) {
             return this.sse.subscribe(req, res, req.query.channel);
-        }
+        } */
 
-        async sources(req, res) {
+        /* async sources(req, res) {
+            req = req || { body: {}, headers: { 'user-agent': 'Mozila' } };
+
             let { meta } = req.body;
 
             const { device } = (new UA(req.headers['user-agent'])).getResult();
@@ -58,9 +118,9 @@ if(typeof(window) === 'undefined') {
             res.json(data.content);
 
             return data;
-        }
+        } */
 
-        async message(req, res) {
+        /* async message(req, res) {
             let { contact, meta, token, source } = req.body;
 
             if(contact.system) {
@@ -79,20 +139,22 @@ if(typeof(window) === 'undefined') {
             publish && publish(token, jwt);
 
             return { reply, data };
-        }
+        } */
 
-        signin(req, res, next) {
+        /* signin(req, res, next) {
             let { jwt } = req.body;
 
             try {
-                let message = jsonwebtoken.verify(jwt, process.env.AUTH0RIZE_SECRET);
+                let message = jsonwebtoken.verify(jwt, this.secret);
 
                 this.onSignIn ? this.onSignIn(req, res, message) : next();
+
+                res && res.end();
             }
             catch(err) {
                 throw { code: 422, message: 'Client verification failed.' };
             }
-        }
+        } */
     }
 
     _class = Auth0rize;

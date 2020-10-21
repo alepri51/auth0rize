@@ -22,7 +22,7 @@ if(typeof(window) === 'undefined') {
 
             this.sse = SSE({ pub, sub });
 
-            this.sseChannel = (req, res) => {
+            /* this.sseChannel = (req, res) => {
                 return this.sse.subscribe(req, res, req.query.channel);
             }
 
@@ -78,7 +78,7 @@ if(typeof(window) === 'undefined') {
                 catch(err) {
                     throw { code: 422, message: 'Client verification failed.' };
                 }
-            }
+            } */
         }
 
         get middlewares() {
@@ -98,11 +98,11 @@ if(typeof(window) === 'undefined') {
             ]
         }
 
-        /* sseChannel(req, res) {
+        sseChannel(req, res) {
             return this.sse.subscribe(req, res, req.query.channel);
-        } */
+        }
 
-        /* async sources(req, res) {
+        async sources(req, res) {
             req = req || { body: {}, headers: { 'user-agent': 'Mozila' } };
 
             let { meta } = req.body;
@@ -118,9 +118,9 @@ if(typeof(window) === 'undefined') {
             res.json(data.content);
 
             return data;
-        } */
+        }
 
-        /* async message(req, res) {
+        async message(req, res) {
             let { contact, meta, token, source } = req.body;
 
             if(contact.system) {
@@ -139,9 +139,9 @@ if(typeof(window) === 'undefined') {
             publish && publish(token, jwt);
 
             return { reply, data };
-        } */
+        }
 
-        /* signin(req, res, next) {
+        signin(req, res, next) {
             let { jwt } = req.body;
 
             try {
@@ -154,7 +154,7 @@ if(typeof(window) === 'undefined') {
             catch(err) {
                 throw { code: 422, message: 'Client verification failed.' };
             }
-        } */
+        }
     }
 
     _class = Auth0rize;

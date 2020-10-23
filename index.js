@@ -206,6 +206,8 @@ else {
                 let event = new CustomEvent('signin', { detail: response });
 
                 this.dispatchEvent(event);
+
+                this.interval && clearInterval(this.interval);
             }
         }
 

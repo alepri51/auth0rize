@@ -210,6 +210,14 @@ else {
         }
 
         async sources({ meta = {} } = {}) {
+            this.interval && clearInterval(this.interval);
+
+            if(this.ttl) {
+                this.interval = setInterval(() => {
+                    this.sources({ meta }).then(sources => this.onUpdate && this.onUpdate(sources));
+                }, this.ttl);
+            }
+
             let url = `${this.url}/auth0rize.sources`;
 
             let response = await fetch(url, {
@@ -229,7 +237,7 @@ else {
 
                 eventSource.addEventListener(token, this.listener);
 
-                setTimeout(() => {
+                this.ttl && setTimeout(() => {
                     eventSource.removeEventListener(token, this.listener);
 
                     eventSource.close();

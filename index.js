@@ -222,7 +222,7 @@ else {
 
             let response = await fetch(url, {
                 method: 'POST',
-                body: JSON.stringify({ meta }),
+                body: JSON.stringify({ meta, ttl: this.ttl }),
                 headers: {
                     'Content-Type': 'application/json'
                 }

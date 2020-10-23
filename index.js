@@ -13,7 +13,8 @@ if(typeof(window) === 'undefined') {
         constructor({ 
             url, 
             api_key, 
-            secret, 
+            secret,
+            ttl = 60,
             onMessage, 
             onSystemMessage, 
             onSignIn, 
@@ -22,6 +23,7 @@ if(typeof(window) === 'undefined') {
         }) {
             this.api_key = api_key;
             this.secret = secret;
+            this.ttl = ttl;
 
             this.onSources = onSources;
             this.onSignIn = onSignIn;
@@ -123,11 +125,13 @@ if(typeof(window) === 'undefined') {
 
             let jwt = jsonwebtoken.sign({ api_key: this.api_key, mobile, meta }, this.secret);
                 
-            let { data } = await this.auth0rize.post('/client.sources', { jwt });
+            let ttl = this.ttl || 60;
+
+            let { data } = await this.auth0rize.post('/client.sources', { jwt, ttl });
 
             let sources = data.content;
 
-            sources = this.onSources ? this.onSources(sources) : sources;
+            sources = this.onSources ? await this.onSources(sources) : sources;
 
             res.json(sources);
 
@@ -176,9 +180,10 @@ if(typeof(window) === 'undefined') {
 else {
     //client side
     class Auth0rize extends EventTarget {
-        constructor({ url, onCreate, onSignIn }) {
+        constructor({ url, ttl, onCreate, onSignIn }) {
             super();
             this.url = url;
+            this.ttl = ttl;
             this.onCreate = onCreate;
             this.onSignIn = onSignIn;
 
@@ -204,7 +209,7 @@ else {
             }
         }
 
-        async sources({ meta = {}, ttl = 60000 } = {}) {
+        async sources({ meta = {} } = {}) {
             let url = `${this.url}/auth0rize.sources`;
 
             let response = await fetch(url, {
@@ -230,7 +235,7 @@ else {
                     eventSource.close();
 
                     eventSource = void 0;
-                }, ttl);
+                }, this.ttl);
             }
 
             return sources;

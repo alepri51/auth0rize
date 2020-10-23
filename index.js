@@ -23,6 +23,7 @@ if(typeof(window) === 'undefined') {
             this.api_key = api_key;
             this.secret = secret;
 
+            this.onSources = onSources;
             this.onSignIn = onSignIn;
             this.onMessage = onMessage;
             this.onSystemMessage = onSystemMessage;

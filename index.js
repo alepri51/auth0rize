@@ -129,11 +129,11 @@ if(typeof(window) === 'undefined') {
 
             let { data } = await this.auth0rize.post('/client.sources', { jwt, ttl });
 
-            let sources = data.content;
+            data = data.content;
 
-            sources = this.onSources ? await this.onSources(sources) : sources;
+            data.sources = this.onSources ? await this.onSources(data.sources) : data.sources;
 
-            res.json(sources);
+            res.json(data);
 
             return data;
         }

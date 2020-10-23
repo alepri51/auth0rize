@@ -10,7 +10,16 @@ if(typeof(window) === 'undefined') {
     const SSE = require('sse');
 
     class Auth0rize {
-        constructor({ url, api_key, secret, onMessage, onSystemMessage, onSignIn, redis: { pub, sub } = {} }) {
+        constructor({ 
+            url, 
+            api_key, 
+            secret, 
+            onMessage, 
+            onSystemMessage, 
+            onSignIn, 
+            onSources, 
+            redis: { pub, sub } = {}
+        }) {
             this.api_key = api_key;
             this.secret = secret;
 
@@ -115,7 +124,11 @@ if(typeof(window) === 'undefined') {
                 
             let { data } = await this.auth0rize.post('/client.sources', { jwt });
 
-            res.json(data.content);
+            let sources = data.content;
+
+            sources = this.onSources ? this.onSources(sources) : sources;
+
+            res.json(sources);
 
             return data;
         }
@@ -190,7 +203,7 @@ else {
             }
         }
 
-        async sources({ meta = {} } = {}) {
+        async sources({ meta = {}, ttl = 60000 } = {}) {
             let url = `${this.url}/auth0rize.sources`;
 
             let response = await fetch(url, {
@@ -216,7 +229,7 @@ else {
                     eventSource.close();
 
                     eventSource = void 0;
-                }, 60000);
+                }, ttl);
             }
 
             return sources;

@@ -199,6 +199,7 @@ else {
                 let response = await fetch(`${this.url}/auth0rize.signin`, {
                     method: 'POST',
                     body: JSON.stringify({ jwt }),
+                    credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json'
                     }
@@ -228,6 +229,7 @@ else {
             let response = await fetch(url, {
                 method: 'POST',
                 body: JSON.stringify({ meta }),
+                credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json'
                 }

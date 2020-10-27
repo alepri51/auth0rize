@@ -30,7 +30,10 @@ if(typeof(window) === 'undefined') {
             this.onMessage = onMessage;
             this.onSystemMessage = onSystemMessage;
 
-            this.auth0rize = axios.create({ baseURL: url });
+            this.auth0rize = axios.create({ 
+                baseURL: url,
+                withCredentials: true
+             });
 
             this.sse = SSE({ pub, sub });
 

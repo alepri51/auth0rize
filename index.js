@@ -32,7 +32,7 @@ if(typeof(window) === 'undefined') {
 
             this.auth0rize = axios.create({ 
                 baseURL: url,
-                withCredentials: true
+                //withCredentials: true
              });
 
             this.sse = SSE({ pub, sub });

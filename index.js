@@ -168,9 +168,12 @@ if(typeof(window) === 'undefined') {
             try {
                 let message = jsonwebtoken.verify(jwt, this.secret);
 
-                this.onSignIn ? this.onSignIn(req, res, message) : next();
-
-                res && res.end();
+                if(this.onSignIn) {
+                    this.onSignIn(req, res, message);
+                }
+                else {
+                    res && res.end();
+                }
             }
             catch(err) {
                 throw { code: 422, message: 'Client verification failed.' };

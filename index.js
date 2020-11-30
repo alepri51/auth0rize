@@ -108,6 +108,9 @@ if(typeof(window) === 'undefined') {
                     req.method === 'POST' && req.url.endsWith('/auth0rize.sources') ? this.sources(req, res) : next();
                 },
                 (req, res, next) => {
+                    req.method === 'POST' && req.url.endsWith('/auth0rize.send') ? this.send(req, res) : next();
+                },
+                (req, res, next) => {
                     req.method === 'POST' && req.url.endsWith('/auth0rize.signin') ? this.signin(req, res, next) : next();
                 }
             ]
@@ -137,6 +140,24 @@ if(typeof(window) === 'undefined') {
             data.sources = this.onSources ? await this.onSources(data.sources) : data.sources;
 
             res.json(data);
+
+            return data;
+        }
+
+        async send(req, res) {
+            req = req || { body: {}, headers: { 'user-agent': 'Mozila' } };
+
+            let { source, contact, message } = req.body;
+
+            const { device } = (new UA(req.headers['user-agent'])).getResult();
+
+            const mobile = device.type === 'mobile' ? true : false;
+
+            let jwt = jsonwebtoken.sign({ api_key: this.api_key, mobile, source, contact, message }, this.secret);
+                
+            let { data } = await this.auth0rize.post('/client.send', { jwt });
+
+            res.json(data.content);
 
             return data;
         }
@@ -255,6 +276,22 @@ else {
             }
 
             return sources;
+        }
+
+        async send({ source, contact, message } = {}) {
+            let url = `${this.url}/auth0rize.send`;
+
+            let response = await fetch(url, {
+                method: 'POST',
+                body: JSON.stringify({ source, contact, message }),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            response =  response ? await response.json() : [];
+
+            return response;
         }
     }
 

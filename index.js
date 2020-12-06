@@ -133,13 +133,23 @@ if(typeof(window) === 'undefined') {
                 
             let ttl = this.ttl || 60;
 
-            let { data } = await this.auth0rize.post('/client.sources', { jwt, ttl });
+            let { data } = await this.auth0rize.post('/client.sources', { jwt, ttl }).catch(error => {
+                return { 
+                    data: {
+                        content: {
+                            sources: [] 
+                        }
+                    }
+                };
+            });
 
             data = data.content;
 
             data.sources = this.onSources ? await this.onSources(data.sources) : data.sources;
 
-            res.json(data);
+            res.writeHeader(200, {
+                'Content-Type': 'application/json'
+            }).end(JSON.stringify(data));
 
             return data;
         }

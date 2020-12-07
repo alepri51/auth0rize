@@ -178,6 +178,8 @@ if(typeof(window) === 'undefined') {
             if(contact.system) {
                 this.onSystemMessage && this.onSystemMessage(req.body);
 
+                res && res.end();
+
                 return {};
             }
 

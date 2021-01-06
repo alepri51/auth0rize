@@ -16,7 +16,7 @@
   "author": "auth0rize",
   "license": "MIT",
   "dependencies": {
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "jsonwebtoken": "^8.5.1",
     "sse": "git+https://github.com/alepri51/sse.git",
     "ua-parser-js": "^0.7.22"
